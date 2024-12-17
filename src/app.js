@@ -23,11 +23,28 @@ mongoClient.connect()
            db = mongoClient.db();
 })
 .catch((err) => console.log(err.message))
+console.log(db)
+app.get("/tweets", async(req, res) => {
+    try {
+        const data = await db.collection("tweets").find().toArray();
+        let tweets=[];
 
-app.get("/tweets", (req, res) => {
-    db.collection("tweets").find().toArray()
-    .then(data => res.send(data))
-    .catch(error => res.status(500).send(error.message))
+        {data.forEach( async(element) => { 
+            let user = await db.collection("users").findOne({username:element.username})
+            element = {...element, avatar:user.avatar}
+            console.log(element) 
+        });}
+
+        // console.log(tweets)
+
+        
+        // res.send(tweets)
+    } catch (error) {
+        res.status(500).send(error.message)
+    }
+
+
+
 })
 
 app.post("/sign-up", async (req, res) => {
