@@ -1,6 +1,6 @@
 import express, {json} from "express"
 import cors from "cors"
-import {MongoClient} from "mongodb"
+import {MongoClient, ObjectId} from "mongodb"
 import dotenv from "dotenv"
 import joi from "joi"
 
@@ -84,15 +84,62 @@ app.post("/tweets", async (req, res) => {
             const messages = validation.error.details.map(detail => detail.message);
             return res.status(422).send(messages);
         }
-
-        let finalTweet = {...tweet, avatar:existingUser.avatar} 
     
-        await db.collection("tweets").insertOne(finalTweet);
+        await db.collection("tweets").insertOne(tweet);
         res.sendStatus(201);
         
     } catch (error) {
         res.status(500).send(error.message);
     }   
+
+})
+
+app.put("/tweets/:id", async(req, res) => {
+    const {id} = req.params;
+    const tweet = req.body;
+
+    const tweetSchema = joi.object({
+        username:joi.string().required(),
+        tweet:joi.string().required()
+    });
+
+    const validation = tweetSchema.validate(tweet, {abortEarly:false});
+    if(validation.error){
+        const messages = validation.error.details.map(detail => detail.message);
+        return res.status(422).send(messages);
+    }
+
+    try {
+        const existingUser = 
+        await db.collection("users").findOne({username:tweet.username});
+       
+        if(!existingUser){
+            return res.status(401).send("Usuário não autorizado, por favor, faça o cadastro")
+        } else if(validation.error){
+            const messages = validation.error.details.map(detail => detail.message);
+            return res.status(422).send(messages);
+        }
+
+        //tweet update
+        const updated = await db.collection("tweets").updateOne({
+            _id:new ObjectId(id)
+        }, {
+            $set:{
+                username:tweet.username,
+                tweet:tweet.tweet
+            }
+        });
+
+        if(updated.matchedCount === 0){
+            return res.statusStatus(404);
+        }
+
+        res.sendStatus(204);    
+      
+    } catch (error) {
+        res.status(500).send(error.message);      
+    }
+
 
 })
 
