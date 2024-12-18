@@ -23,27 +23,23 @@ mongoClient.connect()
            db = mongoClient.db();
 })
 .catch((err) => console.log(err.message))
-console.log(db)
+
 app.get("/tweets", async(req, res) => {
     try {
         const data = await db.collection("tweets").find().toArray();
-        let tweets=[];
-
-        {data.forEach( async(element) => { 
-            let user = await db.collection("users").findOne({username:element.username})
-            element = {...element, avatar:user.avatar}
-            console.log(element) 
-        });}
-
-        // console.log(tweets)
-
+        const tweets =[]
         
-        // res.send(tweets)
+        for(let i=0; i< data.length; i++){
+            let user = await db.collection("users").findOne({username:data[i].username})
+                let newElement = {...data[i], avatar:user.avatar}
+                tweets.push(newElement)
+        }
+
+        res.send(tweets)
+
     } catch (error) {
         res.status(500).send(error.message)
     }
-
-
 
 })
 
@@ -157,6 +153,24 @@ app.put("/tweets/:id", async(req, res) => {
         res.status(500).send(error.message);      
     }
 
+
+})
+
+
+app.delete("/tweets/:id", async(req, res) =>{
+   const {id} = req.params
+   
+   try {
+        const tweetToDelete = await db.collection("tweets").deleteOne({ _id: new ObjectId(id)})
+        
+        if(tweetToDelete.deletedCount === 0){
+            return res.status(404).send("tweet não encontrado")
+        }
+
+        return res.status(204).send("tweet deletado com sucesso!")
+   } catch (error) {
+        return res.status(500).send(error.message)
+   }
 
 })
 
