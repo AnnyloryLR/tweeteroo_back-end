@@ -34,6 +34,7 @@ app.get("/tweets", async(req, res) => {
                 let newElement = {...data[i], avatar:user.avatar}
                 tweets.push(newElement)
         }
+        tweets.sort().reverse()
 
         res.send(tweets)
 
