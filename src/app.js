@@ -118,6 +118,7 @@ app.put("/tweets/:id", async(req, res) => {
     });
 
     const validation = tweetSchema.validate(tweet, {abortEarly:false});
+
     if(validation.error){
         const messages = validation.error.details.map(detail => detail.message);
         return res.status(422).send(messages);
@@ -126,12 +127,18 @@ app.put("/tweets/:id", async(req, res) => {
     try {
         const existingUser = 
         await db.collection("users").findOne({username:tweet.username});
-       
+         
         if(!existingUser){
             return res.status(401).send("Usuário não autorizado, por favor, faça o cadastro")
         } else if(validation.error){
             const messages = validation.error.details.map(detail => detail.message);
             return res.status(422).send(messages);
+        }
+
+        const existingID = 
+        await db.collection("tweets").findOne({_id: new ObjectId(id)});
+        if(!existingID){
+            return res.status(404).send("ID não encontrado ou inválido");
         }
 
         //tweet update
